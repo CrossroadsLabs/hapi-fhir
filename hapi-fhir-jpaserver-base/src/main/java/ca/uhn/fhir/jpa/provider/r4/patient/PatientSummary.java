@@ -75,7 +75,7 @@ public class PatientSummary {
 		MEDICAL_DEVICES,
 		DIAGNOSTIC_RESULTS,
 		VITAL_SIGNS,
-		// ILLNESS_HISTORY,
+		ILLNESS_HISTORY,
 		PREGNANCY,
 		SOCIAL_HISTORY,
 		FUNCTIONAL_STATUS,
@@ -94,7 +94,7 @@ public class PatientSummary {
 		Map.entry(IPSSection.VITAL_SIGNS, Map.of("title", "Vital Signs", "code", "8716-3", "display", "Vital Signs")),
 		Map.entry(IPSSection.PREGNANCY, Map.of("title", "Pregnancy Information", "code", "11362-0", "display", "Pregnancy Information")),
 		Map.entry(IPSSection.SOCIAL_HISTORY, Map.of("title", "Social History", "code", "29762-2", "display", "Social History")),
-		// Map.entry(IPSSection.ILLNESS_HISTORY, Map.of("title", "History of Past Illness", "code", "11348-0", "display", "History of Past Illness")),
+		Map.entry(IPSSection.ILLNESS_HISTORY, Map.of("title", "History of Past Illness", "code", "11348-0", "display", "History of Past Illness")),
 		Map.entry(IPSSection.FUNCTIONAL_STATUS, Map.of("title", "Functional Status", "code", "47420-5", "display", "Functional Status")),
 		Map.entry(IPSSection.PLAN_OF_CARE, Map.of("title", "Plan of Care", "code", "18776-5", "display", "Plan of Care")),
 		Map.entry(IPSSection.ADVANCE_DIRECTIVES, Map.of("title", "Advance Directives", "code", "42349-0", "display", "Advance Directives"))
@@ -111,7 +111,7 @@ public class PatientSummary {
 		Map.entry(IPSSection.VITAL_SIGNS, List.of(ResourceType.Observation)),
 		Map.entry(IPSSection.PREGNANCY, List.of(ResourceType.Observation)),
 		Map.entry(IPSSection.SOCIAL_HISTORY, List.of(ResourceType.Observation)),
-		// Map.entry(IPSSection.ILLNESS_HISTORY, List.of(ResourceType.Condition)),
+		Map.entry(IPSSection.ILLNESS_HISTORY, List.of(ResourceType.Condition)),
 		Map.entry(IPSSection.FUNCTIONAL_STATUS, List.of(ResourceType.ClinicalImpression)),
 		Map.entry(IPSSection.PLAN_OF_CARE, List.of(ResourceType.CarePlan)),
 		Map.entry(IPSSection.ADVANCE_DIRECTIVES, List.of(ResourceType.Consent))
@@ -131,7 +131,7 @@ public class PatientSummary {
 		Map.entry(IPSSection.VITAL_SIGNS, "http://hl7.org/fhir/uv/ips/StructureDefinition/VitalSigns-uv-ips"),
 		Map.entry(IPSSection.PREGNANCY, "http://hl7.org/fhir/uv/ips/StructureDefinition/Pregnancy-uv-ips"),
 		Map.entry(IPSSection.SOCIAL_HISTORY, "http://hl7.org/fhir/uv/ips/StructureDefinition/SocialHistory-uv-ips"),
-		// Map.entry(IPSSection.ILLNESS_HISTORY, "http://hl7.org/fhir/uv/ips/StructureDefinition/PastHistoryOfIllnesses-uv-ips"),
+		Map.entry(IPSSection.ILLNESS_HISTORY, "http://hl7.org/fhir/uv/ips/StructureDefinition/PastHistoryOfIllnesses-uv-ips"),
 		Map.entry(IPSSection.FUNCTIONAL_STATUS, "http://hl7.org/fhir/uv/ips/StructureDefinition/FunctionalStatus-uv-ips"),
 		Map.entry(IPSSection.PLAN_OF_CARE, "http://hl7.org/fhir/uv/ips/StructureDefinition/PlanOfCare-uv-ips"),
 		Map.entry(IPSSection.ADVANCE_DIRECTIVES, "http://hl7.org/fhir/uv/ips/StructureDefinition/AdvanceDirectives-uv-ips")
@@ -485,16 +485,55 @@ public class PatientSummary {
                     }                                                        
 		}
 		if (section == IPSSection.PROCEDURES) {
-			return true;
+      if (resource.getResourceType() == ResourceType.Procedure) {
+        Procedure proc = (Procedure) resource;
+        if (proc.getStatus() != Procedure.ProcedureStatus.ENTEREDINERROR
+         && proce.getStatus() != Procedure.ProcedureStatus.NOTDONE) {
+            return true;
+        } 
+        else {
+            return false;
+        }
+      }
+      else {
+        return false;
+      } 
 		}
 		if (section == IPSSection.MEDICAL_DEVICES) {
-			return true;
-		}
+			if (resource.getResourceType() == ResourceType.DeviceUseStatement) {
+        DeviceUseStatement devuse = (DeviceUseStatement) resource;
+        if (devuse.getStatus() != DeviceUseStatement.DeviceUseStatementStatus.ENTEREDINERROR) {
+            return true;
+        } 
+        else {
+            return false;
+        }
+      } 
+      else {
+        return false;
+      } 
+    }
 		if (section == IPSSection.DIAGNOSTIC_RESULTS) {
-			return true;
+			if (resource.getResourceType() == ResourceType.DiagnosticReport) {
+        return true;
+      }
+      else if (resource.getResourceType() == ResourceType.Observation) {
+        // code filtering not yet applied
+        Observation observation = (Observation) resource;
+        return (observation.getStatus() != ObservationStatus.PRELIMINARY);
+      }
+      else {
+        return false;
+      }
 		}
 		if (section == IPSSection.VITAL_SIGNS) {
-			return true;
+      if (resource.getResourceType() == ResourceType.Observation) {
+        // code filtering not yet applied
+        return true;
+      }
+      else {
+        return false;
+      }
 		}
 		if (section == IPSSection.PREGNANCY) {
 			Observation observation = (Observation) resource;
@@ -504,17 +543,49 @@ public class PatientSummary {
 			Observation observation = (Observation) resource;
 			return (observation.getStatus() != ObservationStatus.PRELIMINARY);
 		}
-		// if (section == IPSSection.ILLNESS_HISTORY) {
-		// 	return true;
-		// }
+		if (section == IPSSection.ILLNESS_HISTORY) {
+      Condition prob = (Condition) resource;
+      if (prob.getVerificationStatus().hasCoding("http://terminology.hl7.org/CodeSystem/condition-ver-status", "entered-in-error")) {
+        return false;
+      }
+      else if (prob.getClinicalStatus().hasCoding("http://terminology.hl7.org/CodeSystem/condition-clinical", "inactive")
+       || prob.getClinicalStatus().hasCoding("http://terminology.hl7.org/CodeSystem/condition-clinical", "resolved")
+       || prob.getClinicalStatus().hasCoding("http://terminology.hl7.org/CodeSystem/condition-clinical", "remission")){
+        return true;
+       }
+      else {
+        return false;
+      }
+		}
 		if (section == IPSSection.FUNCTIONAL_STATUS) {
-			return true;
+      ClinicalImpression clinimp = (ClinicalImpressionStatus) resource;
+      if (clinimp.getStatus() != ClinicalImpression.ClinicalImpressionStatus.INPROGRESS
+       && clinimp.getStatus() != ClinicalImpression.ClinicalImpressionStatus.ENTEREDINERROR) {
+        return true;
+      }
+      else {
+        return false;
+      }
 		}
 		if (section == IPSSection.PLAN_OF_CARE) {
-			return true;
+			CarePlan carep = (CarePlan) resource;
+      if (carep.getStatus() == CarePlan.CarePlanStatus.ACTIVE
+       || carep.getStatus() == CarePlan.CarePlanStatus.ONHOLD
+       || carep.getStatus() == CarePlan.CarePlanStatus.UNKNOWN) {
+        return true;
+      }
+      else {
+        return false;
+      }
 		}
 		if (section == IPSSection.ADVANCE_DIRECTIVES) {
-			return true;
+      Consent advdir = (Consent) resource;
+      if (advdir.getStatus() == Consent.ConsentState.ACTIVE) {
+        return true;
+      }
+      else {
+        return false;
+      }
 		}
 		return false;
 	}
