@@ -140,7 +140,7 @@ public class PatientSummary {
     // For sequential ids on an UUID indexed server, 404s are not returned for empty search results
     // The following prevents a Java error inside this operation but changes could also be made upstream at IdHelperService 
     // See hapi-fhir-jpaserver-base/src/main/java/ca/uhn/fhir/jpa/dao/index/IdHelperService.java 
-    if (searchResources.isEmpty()) {
+    if (searchSet.length == 0) {
       throw new ResourceNotFoundException(Msg.code(2001) + "Resource " + id + " is not known"); 
     }
     else {
