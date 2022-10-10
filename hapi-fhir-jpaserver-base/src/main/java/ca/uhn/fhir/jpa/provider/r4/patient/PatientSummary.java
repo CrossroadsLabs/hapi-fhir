@@ -16,15 +16,19 @@ import org.hl7.fhir.r4.model.Resource;
 import org.hl7.fhir.r4.model.CodeableConcept;
 import org.hl7.fhir.r4.model.Coding;
 import org.hl7.fhir.r4.model.Narrative;
-import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.AllergyIntolerance;
+import org.hl7.fhir.r4.model.CarePlan;
+import org.hl7.fhir.r4.model.ClinicalImpression;
+import org.hl7.fhir.r4.model.DeviceUseStatement;
 import org.hl7.fhir.r4.model.MedicationStatement;
 import org.hl7.fhir.r4.model.MedicationRequest;
 import org.hl7.fhir.r4.model.MedicationAdministration;
 import org.hl7.fhir.r4.model.MedicationDispense;
 import org.hl7.fhir.r4.model.Immunization;        
-import org.hl7.fhir.r4.model.Meta;
+import org.hl7.fhir.r4.model.Procedure;        
+import org.hl7.fhir.r4.model.Observation;
 import org.hl7.fhir.r4.model.Observation.ObservationStatus;
+import org.hl7.fhir.r4.model.Meta;
 import org.hl7.fhir.r4.model.Organization;
 import org.hl7.fhir.r4.model.Address;
 import org.hl7.fhir.r4.model.Identifier;
@@ -488,7 +492,7 @@ public class PatientSummary {
       if (resource.getResourceType() == ResourceType.Procedure) {
         Procedure proc = (Procedure) resource;
         if (proc.getStatus() != Procedure.ProcedureStatus.ENTEREDINERROR
-         && proce.getStatus() != Procedure.ProcedureStatus.NOTDONE) {
+         && proc.getStatus() != Procedure.ProcedureStatus.NOTDONE) {
             return true;
         } 
         else {
