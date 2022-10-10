@@ -19,6 +19,7 @@ import org.hl7.fhir.r4.model.Narrative;
 import org.hl7.fhir.r4.model.AllergyIntolerance;
 import org.hl7.fhir.r4.model.CarePlan;
 import org.hl7.fhir.r4.model.ClinicalImpression;
+import org.hl7.fhir.r4.model.Consent;
 import org.hl7.fhir.r4.model.DeviceUseStatement;
 import org.hl7.fhir.r4.model.MedicationStatement;
 import org.hl7.fhir.r4.model.MedicationRequest;
@@ -562,7 +563,7 @@ public class PatientSummary {
       }
 		}
 		if (section == IPSSection.FUNCTIONAL_STATUS) {
-      ClinicalImpression clinimp = (ClinicalImpressionStatus) resource;
+      ClinicalImpression clinimp = (ClinicalImpression) resource;
       if (clinimp.getStatus() != ClinicalImpression.ClinicalImpressionStatus.INPROGRESS
        && clinimp.getStatus() != ClinicalImpression.ClinicalImpressionStatus.ENTEREDINERROR) {
         return true;
