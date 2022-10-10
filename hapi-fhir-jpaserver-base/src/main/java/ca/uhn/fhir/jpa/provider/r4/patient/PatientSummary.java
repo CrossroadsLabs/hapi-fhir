@@ -136,21 +136,29 @@ public class PatientSummary {
 	);
 
 	public static Bundle buildFromSearch(IBundleProvider searchSet, FhirContext ctx) {			
-		List<Resource> searchResources = createResourceList(searchSet.getAllResources());
-		Patient patient = (Patient) searchResources.get(0);
-		Organization author = createAuthor();
-		Composition composition = createIPSComposition(patient, author);
-
-		ImmutablePair<List<Resource>, HashMap<IPSSection, List<Resource>>> resourceTuple = buildResourceTuple(searchResources, ctx, composition, patient);
-		List<Resource> resources = resourceTuple.getLeft();
-		HashMap<IPSSection, List<Resource>> sectionPrimaries = resourceTuple.getRight();
-
-		HashMap<IPSSection, String> sectionNarratives = createNarratives(sectionPrimaries, resources, ctx);
-		composition = addIPSSections(composition, sectionPrimaries, sectionNarratives);
-
-		Bundle bundle = createIPSBundle(composition, resources, author);
-
-		return bundle;
+		List<javax.annotation.Resource> searchResources = createResourceList(searchSet.getAllResources());
+    // For sequential ids on an UUID indexed server, 404s are not returned for empty search results
+    // The following prevents a Java error inside this operation but changes could also be made upstream at IdHelperService 
+    // See hapi-fhir-jpaserver-base/src/main/java/ca/uhn/fhir/jpa/dao/index/IdHelperService.java 
+    if (searchResources.isEmpty()) {
+      throw new ResourceNotFoundException(Msg.code(2001) + "Resource " + id + " is not known"); 
+    }
+    else {
+      Patient patient = (Patient) searchResources.get(0);
+      Organization author = createAuthor();
+      Composition composition = createIPSComposition(patient, author);
+  
+      ImmutablePair<List<Resource>, HashMap<IPSSection, List<Resource>>> resourceTuple = buildResourceTuple(searchResources, ctx, composition, patient);
+      List<Resource> resources = resourceTuple.getLeft();
+      HashMap<IPSSection, List<Resource>> sectionPrimaries = resourceTuple.getRight();
+  
+      HashMap<IPSSection, String> sectionNarratives = createNarratives(sectionPrimaries, resources, ctx);
+      composition = addIPSSections(composition, sectionPrimaries, sectionNarratives);
+  
+      Bundle bundle = createIPSBundle(composition, resources, author);
+  
+      return bundle;  
+    }
 	}
 
 	private static Bundle createIPSBundle(Composition composition, List<Resource> resources, Organization author) {
